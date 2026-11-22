@@ -10,6 +10,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (for example v1.0.1)"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -60,7 +65,7 @@ jobs:
   release:
     name: Publish GitHub release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -83,13 +88,24 @@ jobs:
             exit 1
           fi
 
-          release_apk="BluetoothJammer-${GITHUB_REF_NAME}.apk"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            release_tag="${GITHUB_REF_NAME}"
+          else
+            release_tag="${{ inputs.tag }}"
+          fi
+
+          if [ -z "$release_tag" ]; then
+            echo "A release tag is required for workflow_dispatch"
+            exit 1
+          fi
+
+          release_apk="BluetoothJammer-${release_tag}.apk"
           cp "$apk" "$release_apk"
 
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" "$release_apk" --clobber
+          if gh release view "$release_tag" >/dev/null 2>&1; then
+            gh release upload "$release_tag" "$release_apk" --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" "$release_apk" \
-              --title "BluetoothJammer ${GITHUB_REF_NAME}" \
+            gh release create "$release_tag" "$release_apk" \
+              --title "BluetoothJammer ${release_tag}" \
               --generate-notes
           fi

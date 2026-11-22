@@ -25,6 +25,9 @@ The Android workflow builds and tests the project on pushes and pull requests.
 Pushing a tag such as `v1.0.1` also creates a GitHub Release containing the
 release APK.
 
+You can also run **Android build and release** manually from the Actions tab
+and provide the release tag (for example `v1.0.1`).
+
 To sign release APKs with a project keystore, add these repository secrets:
 
 - `ANDROID_KEYSTORE_BASE64`: the keystore encoded as base64
